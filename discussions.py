@@ -1,14 +1,12 @@
+from database import *
+import joblib
 import requests
+import json
 from collections import defaultdict
-
-from keys import *
+from util import detect_spam, callback
 
 GITHUB_API_URL = "https://api.github.com/graphql"
 
-def callback(total_comments, spam_comments_count, spam_discussions_count, message, done=True):
-    print()
-    print(f"Total Com: {total_comments} Spam: {spam_comments_count} Spam Discussions: {spam_discussions_count}\n Message{message}")
-    
 
 def fetch_discussions_comments(owner, repo, headers, after_cursor=None, lastpage=''):
 
@@ -129,7 +127,8 @@ def delete_discussion(discussion_id, headers):
 
 
 def moderate_discussion_comments(repo_id, from_begining=False, delete_comments=False, delete_discussions=False, callback:callable = callback):
-
+    repo_id, owner_id, repo, last_processed_cursor = get_repo_for_discussion(repo_id)
+    owner_id, owner, token, _ = get_user(owner_id)
     spam_comments = defaultdict(int)
     spam_comments_count = 0
     spam_discussions_count = 0
@@ -137,7 +136,7 @@ def moderate_discussion_comments(repo_id, from_begining=False, delete_comments=F
     message="Starting........"
     last_processed_cursor = '' if from_begining else last_processed_cursor        
     headers = {
-        'Authorization': f'Bearer {GITHUB_KEY}',
+        'Authorization': f'Bearer {token}',
         'Content-Type': 'application/json'
     }
     
@@ -149,28 +148,38 @@ def moderate_discussion_comments(repo_id, from_begining=False, delete_comments=F
         latest_cursor = last_processed_cursor
         comments_remaining = True
         while comments_remaining:
-            data = fetch_discussions_comments("Rahul-Samedavar", "Nexus2.0", headers, latest_cursor, lastpage)
+            data = fetch_discussions_comments(owner, repo, headers, latest_cursor, lastpage)
             # print(json.dumps(data, indent=2))
 
             for discussion in data['data']['repository']['discussions']['edges']:
                 
                 discussion_body = discussion['node']['body']
-                print(discussion_body)
+                if delete_discussions and  discussion_body and detect_spam(discussion_body):
+                    delete_discussion(discussion['node']['id'], headers)
+                    message = f"discussion deleted.\nbody:{discussion_body}\n"
+                    spam_discussions_count += 1
+                    callback(total_comments, spam_comments_count, spam_discussions_count, message=message, done=False)
+                    continue
 
                 for comment_edge in discussion['node']['comments']['edges']:
                     comment_body = comment_edge['node']['body']
                     is_minimized = comment_edge['node']['isMinimized']
                     total_comments += 1
+                    print(comment_edge['node']['id'])
                     if not is_minimized or delete_comments:
-                        spam_comments_count += 1
-                        comment_id = comment_edge['node']['id']
-                        if delete_comments and comment_body:
-                            delete_comment(comment_id, headers)
-                            message = f"Comment deleted\nbody:{comment_body}"
-                        else:
-                            minimize_comment(comment_id, headers)
-                            message = f"Comment Hidden\nbody:{comment_body}"
-                        spam_comments[comment_edge['node']['author']['login']] += 1
+                        if detect_spam(comment_body):
+                            spam_comments_count += 1
+                            comment_id = comment_edge['node']['id']
+                            add_comment(repo_id, comment_body, comment_id, True)
+                            if delete_comments and comment_body:
+                              delete_comment(comment_id, headers)
+                              message = f"Comment deleted\nbody:{comment_body}"
+                            else:
+                              minimize_comment(comment_id, headers)
+                              message = f"Comment Hidden\nbody:{comment_body}"
+                            spam_comments[comment_edge['node']['author']['login']] += 1
+                        add_comment(repo_id, comment_body, comment_edge['node']['id'], False)
+                        
                     callback(total_comments, spam_comments_count, spam_discussions_count, message=message, done=False)                            
 
                     latest_cursor = comment_edge['cursor']
@@ -194,8 +203,10 @@ def moderate_discussion_comments(repo_id, from_begining=False, delete_comments=F
     print("Moderation Results:")
     print("comments moderated:", sum(spam_comments.values()), "\tdiscussions moderated:", spam_discussions_count)
     callback(total_comments, spam_comments_count, spam_discussions_count, message=message, done=True)
-
+    if from_begining:
+        reset_counts(repo_id)
+    update_discussion_counts(repo_id, spam_comments, spam_discussions_count, total_comments)
+    update_discussion_cursor(repo_id, latest_cursor)
 
 if __name__ == "__main__":
-    moderate_discussion_comments(8, from_begining=True, delete_discussions=True, delete_comments=False)
-  
+    moderate_discussion_comments(26, from_begining=True, delete_discussions=True, delete_comments=False)
