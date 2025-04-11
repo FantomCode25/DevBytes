@@ -148,6 +148,11 @@ class App(CTk):
                                     border_width=2, corner_radius=30,  anchor="center")
         change_user_btn.pack(fill="y", side="right", pady=4, padx=10)
 
+        finetune_btn = CTkButton(navbar, text="Finetune", font=("Mona-Sans", 22, "bold"), command=self.finetune,
+                                    fg_color='transparent', hover_color=NH, border_color=B1, text_color=D1,
+                                    border_width=2, corner_radius=30,  anchor="center")
+        finetune_btn.pack(fill="y", side="right", pady=4, padx=10)
+
     def partition(self):
         self.left = CTkFrame(self, fg_color=L1, corner_radius=0, bg_color=L1,  width=130,
                              border_color=B1, border_width=1)
@@ -169,6 +174,8 @@ class App(CTk):
 
         self.search_icon = CTkImage(Image.open('assets/search.png'), size=(28, 28))
         self.offline_icon = CTkImage(Image.open('assets/offline.png'), size=(70, 70))
+        self.finetune_icon = CTkImage(Image.open('assets/finetuning.jpg'), size=(70, 70))
+
         
         self.repos_list_container = CTkFrame(self.left, fg_color="transparent", corner_radius=0)
         self.repos_list_container.grid(row=0, column=0, stick='NSEW', pady=8)
@@ -860,8 +867,6 @@ class App(CTk):
         print("Server running at http://localhost:8080...")
         server.serve_forever()
 
-
-
     def start_auth_flow(self):
         global ACCESS_TOKEN, USERNAME
         t = threading.Thread(target=self.start_http_server, daemon=True)
@@ -884,6 +889,36 @@ class App(CTk):
         ACCESS_TOKEN = None
         USERNAME = None
 
+    def finetune(self):
+        if not self.user_id:
+            return
+
+        def popup_thread():
+            popup = CTkToplevel(self)
+            popup.title("Finetuning")
+            popup.geometry("300x150")
+            popup.attributes("-topmost", True)
+            popup.focus()
+            popup.resizable(False, False)
+
+            CTkLabel(popup, text="",image=self.finetune_icon).pack(pady=10)
+
+            progress = CTkLabel(popup, text="Finetuning in progress...")
+            progress.pack(pady=10)
+
+            comments = get_changed_comments(self.user_id)
+            batch_size = 100
+            print(comments)
+            for i in range(0, len(comments), batch_size):
+                batch = comments[i:i+batch_size]
+                try:
+                    finetune(batch)
+                except Exception as e:
+                    print("FineTune Error:", e)
+
+            progress.configure(text="Finetuning Complete")
+
+        threading.Thread(target=popup_thread, daemon=True).start()
 
 
 app = App()

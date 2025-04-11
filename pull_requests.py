@@ -174,18 +174,19 @@ def moderate_pull_request_comments(repo_id, from_begining=False, delete_comments
                     total_comments += 1
                     if not is_minimized or delete_comments:
                         if detect_spam(comment_body):
+                            spam_comments_count += 1
                             comment_id = comment_edge['node']['id']
                             if delete_comments and comment_body:
                               delete_comment(comment_id, headers)
                               message = f"Comment deleted:\nbody: {comment_body}"
                             else:
                               minimize_comment(comment_id, headers)
-                              add_comment(repo_id, comment_body, comment_id, True)
+                              add_comment(repo_id, comment_body, comment_id, True, 2)
                               message = f"Comment hidden:\nbody: {comment_body}"
                             spam_comments[comment_edge['node']['author']['login']] += 1
                           
                         else:
-                          add_comment(repo_id, comment_body, comment_edge['node']['id'], False)
+                          add_comment(repo_id, comment_body, comment_edge['node']['id'], False, 2)
                     callback(total_comments, spam_comments_count, spam_pr_count, message=message,  done=False)
 
                     latest_cursor = comment_edge['cursor']

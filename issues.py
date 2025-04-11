@@ -169,11 +169,11 @@ def moderate_issues_comments(repo_id, from_begining=False,  delete_comments=Fals
                             message = f"Comment Deleted\nbody:{comment_body}"
                           else:
                             minimize_comment(comment_id, headers)
-                            add_comment(repo_id, comment_body, comment_id, True)
+                            add_comment(repo_id, comment_body, comment_id, True, 3)
                             message = f"Comment Hidden\nbody:{comment_body}"
                           spam_comments[comment_edge['node']['author']['login']] += 1
                         else:
-                          add_comment(repo_id, comment_body, comment_edge['node']['id'], False)
+                          add_comment(repo_id, comment_body, comment_edge['node']['id'], False, 3)
                     callback(total_comments, spam_comments_count, spam_issues_count, message=message,  done=False)
 
                     latest_cursor = comment_edge['cursor']

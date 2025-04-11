@@ -54,10 +54,12 @@ def create_table():
                 repo INTEGER,
                 content Text,
                 isSpam int,
+                section int,
                 FOREIGN KEY(repo)  REFERENCES repositories(id)
             );
         """
     )
+    
     
     conn.commit()
     conn.close()
@@ -320,16 +322,16 @@ def reset_counts(repo_id):
     conn.commit()
     conn.close()
 
-def add_comment(repo_id, content, comment_id, is_spam):
+def add_comment(repo_id, content, comment_id, is_spam, section):
     conn = sqlite3.connect(DATABASE_NAME)
     cursor = conn.cursor()
     try:
         cursor.execute(
             """
-            INSERT INTO comments (repo, content, comment_id, isSpam)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO comments (repo, content, comment_id, isSpam, section)
+            VALUES (?, ?, ?, ?, ?)
             """,
-            (repo_id, content, comment_id, int(is_spam))
+            (repo_id, content, comment_id, int(is_spam), section)
         )
     except Exception as e:
         print(e)
@@ -360,3 +362,4 @@ if __name__ == '__main__':
     print("Database")
     # print(get_userid('Rahul-Samedavar'))
     # print(get_all_comments())
+

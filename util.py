@@ -156,6 +156,9 @@ def toggle_block(username, token):
     else:
         block_user(username, token)
 
+
+
+
 def check_minimized_mismatches(comment_list, token):
     headers = {"Authorization": f"Bearer {token}"}
     mismatches = []
@@ -169,9 +172,20 @@ def check_minimized_mismatches(comment_list, token):
         query_parts = []
         for idx, item in enumerate(batch):
             cid = item[1]
+            section = item[-1]
+
+            if section == 1:  # Discussion
+                type_fragment = "DiscussionComment"
+            elif section == 2:  # Pull Request
+                type_fragment = "PullRequestReviewComment"
+            elif section == 3:  # Issue
+                type_fragment = "IssueComment"
+            else:
+                continue  # Unknown section
+
             query_parts.append(f'''
                 comment{idx}: node(id: "{cid}") {{
-                    ... on DiscussionComment {{
+                    ... on {type_fragment} {{
                         id
                         isMinimized
                     }}
@@ -181,12 +195,16 @@ def check_minimized_mismatches(comment_list, token):
         full_query = f"query {{\n{''.join(query_parts)}\n}}"
 
         response = requests.post(GITHUB_API_URL, json={"query": full_query}, headers=headers)
-        data = response.json()["data"]
+        if response.status_code != 200:
+            print(f"GitHub API error: {response.status_code}")
+            continue
+
+        data = response.json().get("data", {})
         for idx, item in enumerate(batch):
             node = data.get(f"comment{idx}")
             if node is None:
-                continue 
-            github_minimized = node["isMinimized"]
+                continue
+            github_minimized = node.get("isMinimized", False)
             local_spam = bool(item[4])
             if github_minimized != local_spam:
                 mismatches.append({
@@ -195,6 +213,16 @@ def check_minimized_mismatches(comment_list, token):
                 })
     return mismatches
 
+
+def get_changed_comments(user_id):
+        _, _, token, _ = get_user(user_id)
+        repos = get_user_repositories(user_id)
+        repos, _ = zip(*repos)
+        comments = []
+        for repo in repos:
+            comments.extend(get_comments(repo))
+            # delete_comments(repo)
+        return check_minimized_mismatches(comments, token)
 
 def shorten(str, n=18):
     if len(str) <= n or n == 0:
@@ -207,9 +235,21 @@ def callback(total_comments, spam_comments_count, spam_discussions_count, messag
     print(f"Msg: {message}")
     if done: print("===============done===============")
 
-model = joblib.load(r"Models\spam_detector.pkl")
+
+
+MODEL_PATH = r"Models\spam_detector.pkl"
+model = joblib.load(MODEL_PATH)
 def detect_spam(comment_body):
     return model.predict([comment_body])[0] == 1
+
+def finetune(data):
+    X = [item['text'].strip() for item in data]  
+    labels = [int(item['isMinimized']) for item in data]  
+    vectorizer = model.named_steps['vectorizer']
+    nb = model.named_steps['nb']
+    X_new = vectorizer.transform(X)
+    nb.partial_fit(X_new, labels)
+    joblib.dump(model, MODEL_PATH)
 
 if __name__ == "__main__":
     print("Util")
