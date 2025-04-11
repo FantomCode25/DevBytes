@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Repositories</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">
+                <img src="/static/assets/logo.png" alt="Company Logo" class="logo-image">
+            </a>
+        </div>
+    </nav>
+    <div class="container" style="margin-bottom: 25px;">
+        <!-- Display User's Avatar and Name -->
+        <div class="user-info" style="margin-top: 30px;">
+            <img src="{{ user_avatar_url }}" alt="User Avatar" class="user-avatar">
+            <h1 style="font-size:x-large;">{{ user_name }}'s Repositories</h1>
+        </div>
+
+        <div class="repos-container">
+            <div class="repos-list">
+                {% for repo in repos %}
+                <div class="repo-card" data-repo="{{ repo.full_name }}" onclick="showRepoDetails('{{ repo.full_name }}', '{{ repo.private }}')">
+                    <h3 class="repo-name">{{ repo.name }}</h3>
+                    <div>
+                        <span class="repo-visibility {{ 'private' if repo.private else 'public' }}">
+                            <i class="fas {{ 'fa-lock' if repo.private else 'fa-globe' }}"></i>
+                            {{ 'Private' if repo.private else 'Public' }}
+                        </span>
+                        <span id="workflow-badge-{{ repo.name }}" class="workflow-badge inactive">
+                            <i class="fas fa-cog"></i> Workflows
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="repo-details">
+                <h2 id="repo-name">Select a repository</h2>
+                <div id="repo-info">
+                    <p>
+                        <strong>Status:</strong> 
+                        <span id="feature-status" class="feature-status disabled">Disabled</span>
+                    </p>
+                    
+                    <div class="cron-section">
+                        <h3>Schedule Configuration</h3>
+                        <p>Choose when you want the spam detection to run:</p>
+                        
+                        <div class="cron-builder">
+                            <div class="cron-option">
+                                <label>
+                                    <input type="radio" name="schedule-type" value="hourly" checked> Hourly
+                                </label>
+                                <label>
+                                    <input type="radio" name="schedule-type" value="daily"> Daily
+                                </label>
+                                <label>
+                                    <input type="radio" name="schedule-type" value="weekly"> Weekly
+                                </label>
+                                <label>
+                                    <input type="radio" name="schedule-type" value="monthly"> Monthly
+                                </label>
+                                <label>
+                                    <input type="radio" name="schedule-type" value="custom"> Custom
+                                </label>
+                            </div>
+                            
+                            <div id="schedule-config" class="cron-inputs">
+                                <!-- This will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <div class="cron-expression-display">
+                            <strong>Generated Cron:</strong> <code id="cron-expression">0 * * * *</code>
+                            <div class="tooltip">
+                                <i class="fas fa-info-circle"></i>
+                                <span class="tooltip-text">This is the cron expression that will be used in your GitHub workflow.</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button id="delete-btn" class="danger-button" disabled>
+                            <i class="fas fa-trash-alt button-icon"></i> Delete Workflow
+                        </button>
+                        <button id="add-update-btn" class="primary-button" disabled>
+                            <i class="fas fa-plus button-icon"></i> Add Workflow
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="notification" class="notification hidden"></div>
+    <script src="/static/script.js"></script>
+</body>
+</html>

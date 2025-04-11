@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Workflow Installer</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">
+                <img src="/static/assets/logo.png" alt="Company Logo" class="logo-image">
+            </a>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="hero">
+            <div class="hero-content">
+                <h1>GitHub Workflow Installer</h1>
+                <p>Install Spam Detection workflow to your GitHub repositories with one click! Our tool helps you automatically hide spam comments using machine learning.</p>
+                <div class="cta-button">
+                    <a href="{{ url_for('login') }}" class="github-login">
+                        <i class="fab fa-github" style="padding: 5px;"></i>
+                        Login with GitHub
+                    </a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="/static/assets/marketplace.png" alt="Securing from Spams" class="secure-image">
+            </div>
+        </div>
+        <div class="learn-more-section">
+            <a href="https://github.com/marketplace/actions/autohide-spam-comments" class="learn-more-link">
+                <span class="learn-more-text">Learn more about the Action on marketplace</span>
+                <i class="fas fa-arrow-right learn-more-icon"></i>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
