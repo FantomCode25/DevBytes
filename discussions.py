@@ -165,20 +165,20 @@ def moderate_discussion_comments(repo_id, from_begining=False, delete_comments=F
                     comment_body = comment_edge['node']['body']
                     is_minimized = comment_edge['node']['isMinimized']
                     total_comments += 1
-                    print(comment_edge['node']['id'])
                     if not is_minimized or delete_comments:
                         if detect_spam(comment_body):
                             spam_comments_count += 1
                             comment_id = comment_edge['node']['id']
-                            add_comment(repo_id, comment_body, comment_id, True)
                             if delete_comments and comment_body:
                               delete_comment(comment_id, headers)
                               message = f"Comment deleted\nbody:{comment_body}"
                             else:
                               minimize_comment(comment_id, headers)
+                              add_comment(repo_id, comment_body, comment_id, True)
                               message = f"Comment Hidden\nbody:{comment_body}"
                             spam_comments[comment_edge['node']['author']['login']] += 1
-                        add_comment(repo_id, comment_body, comment_edge['node']['id'], False)
+                        else:
+                          add_comment(repo_id, comment_body, comment_edge['node']['id'], False)
                         
                     callback(total_comments, spam_comments_count, spam_discussions_count, message=message, done=False)                            
 

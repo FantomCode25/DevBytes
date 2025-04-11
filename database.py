@@ -341,15 +341,15 @@ def add_comment(repo_id, content, comment_id, is_spam):
 def get_comments(repo_id):
     conn = sqlite3.connect(DATABASE_NAME)
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM comments WHERE repo = ?", (repo_id))
+    cursor.execute("SELECT * FROM comments WHERE repo = ?", (repo_id,))
     rows = cursor.fetchall()
     conn.close()
     return rows
 
-def delete_all_comments(repo_id):
+def delete_comments(repo_id):
     conn = sqlite3.connect(DATABASE_NAME)
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM comments WHERE repo = ?", (repo_id))
+    cursor.execute("DELETE FROM comments WHERE repo = ?", (repo_id,))
     conn.commit()
     conn.close()
 

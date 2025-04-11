@@ -1,0 +1,5 @@
+joblilb
+customtkinter
+pillow
+requests
+matplotlib

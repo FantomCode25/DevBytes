@@ -4,6 +4,7 @@ from database import *
 GITHUB_API_URL = "https://api.github.com/graphql"
 import joblib
 import requests
+from tkinter import messagebox
 
 GITHUB_API_URL = "https://api.github.com/graphql"
 
@@ -53,7 +54,7 @@ def fetch_user_repositories(username, token):
         error_message = data["errors"][0].get("message", "Unknown error.")
         raise Exception(f"GitHub API error: {error_message}")
     
-    return data["data"]["user"]["repositories"]["nodes"][2:]
+    return data["data"]["user"]["repositories"]["nodes"]
 
 def new_user_register(username, token):
     try:
@@ -100,20 +101,60 @@ def load_repos_sub(id, username, token, initial_repos):
         update_repos(id, json.dumps(initial_repos))
     return initial_repos
 
-def callback(total_comments, spam_comments_count, spam_discussions_count, message,  done=False):
-    print()
-    print(f"Total: {total_comments} Spam: {spam_comments_count} Disc: {spam_discussions_count}")
-    print(f"Message: {message}")
-    if done: print("Done")
 
 def load_repos(id):
     _ , username, token, initial_repos = get_user(id)
     initial_repos = json.loads(initial_repos)
     return load_repos_sub(id, username, token, initial_repos)
 
-import requests
+def block_user(username, token):
+    url = f"https://api.github.com/user/blocks/{username}"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    response = requests.put(url, headers=headers)
+    if response.status_code == 204:
+        print(f"User {username} has been blocked successfully.")
+        messagebox.showinfo("Success", f"Blocked {username}.")
+    else:
+        messagebox.showinfo("Failure", f"Couldn't Blocked {username}.")
+        print(f"block failed. {response.text}")
 
-GITHUB_API_URL = "https://api.github.com/graphql"
+def is_user_blocked(username, token):
+    url = f"https://api.github.com/user/blocks/{username}"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 204:
+        return True
+    elif response.status_code == 404:
+        return False
+    else:
+        print(f"Error checking block status: {response.json()}")
+        return None
+
+def unblock_user(username, token):
+    url = f"https://api.github.com/user/blocks/{username}"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json"
+    }
+
+    response = requests.delete(url, headers=headers)
+
+    if response.status_code == 204:
+        messagebox.showinfo("Failure", f"Unblocked {username}.")
+    else:
+        messagebox.showinfo("Failure", f"Couldn't Blocked {username}.")
+
+def toggle_block(username, token):
+    if is_user_blocked(username, token):
+        unblock_user(username, token)
+    else:
+        block_user(username, token)
 
 def check_minimized_mismatches(comment_list, token):
     headers = {"Authorization": f"Bearer {token}"}
@@ -141,20 +182,17 @@ def check_minimized_mismatches(comment_list, token):
 
         response = requests.post(GITHUB_API_URL, json={"query": full_query}, headers=headers)
         data = response.json()["data"]
-        print(data)
         for idx, item in enumerate(batch):
             node = data.get(f"comment{idx}")
             if node is None:
                 continue 
             github_minimized = node["isMinimized"]
             local_spam = bool(item[4])
-            print(local_spam , github_minimized)
             if github_minimized != local_spam:
                 mismatches.append({
                     "text": item[3],
                     "isMinimized": github_minimized,
                 })
-    delete_all_comments()
     return mismatches
 
 
@@ -163,7 +201,11 @@ def shorten(str, n=18):
         return str
     return str[:n] + "\n" + shorten(str[n:], n)
 
-
+def callback(total_comments, spam_comments_count, spam_discussions_count, message, done=True):
+    print()
+    print(f"Total: {total_comments} Spam: {spam_comments_count}")
+    print(f"Msg: {message}")
+    if done: print("===============done===============")
 
 model = joblib.load(r"Models\spam_detector.pkl")
 def detect_spam(comment_body):
@@ -172,4 +214,3 @@ def detect_spam(comment_body):
 if __name__ == "__main__":
     print("Util")
     # print(load_repos(1))
-    print(check_minimized_mismatches(get_all_comments(), "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"))
