@@ -901,14 +901,31 @@ class App(CTk):
             popup.focus()
             popup.resizable(False, False)
 
+            popup.update_idletasks()
+
+            popup_width = popup.winfo_width()
+            popup_height = popup.winfo_height()
+
+            root_x = self.winfo_rootx()
+            root_y = self.winfo_rooty()
+            root_width = self.winfo_width()
+            root_height = self.winfo_height()
+
+            # Calculate position for centering
+            pos_x = root_x + (root_width // 2) - (popup_width // 2)
+            pos_y = root_y + (root_height // 2) - (popup_height // 2)
+
+            popup.geometry(f"+{pos_x}+{pos_y}")
+
+
+
             CTkLabel(popup, text="",image=self.finetune_icon).pack(pady=10)
 
-            progress = CTkLabel(popup, text="Finetuning in progress...")
+            progress = CTkLabel(popup, text="Finetuning in progress...",  font=("Roboto", 20))
             progress.pack(pady=10)
 
             comments = get_changed_comments(self.user_id)
             batch_size = 100
-            print(comments)
             for i in range(0, len(comments), batch_size):
                 batch = comments[i:i+batch_size]
                 try:
