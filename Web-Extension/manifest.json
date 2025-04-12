@@ -1,0 +1,26 @@
+{
+    "manifest_version": 3,
+    "name": "GitHub Comment Reporter",
+    "version": "1.0",
+    "description": "Report spam or ham comments directly from GitHub.",
+    "permissions": ["storage", "activeTab", "scripting"],
+    "icons": {
+      "16": "icons/wlogo.png",
+      "48": "icons/wlogo.png",
+      "128": "icons/wlogo.png"
+    },
+    "host_permissions": ["https://github.com/*"],
+    "action": {
+      "default_popup": "popup/popup.html"
+    },
+    "content_scripts": [
+      {
+        "matches": ["https://github.com/*"],
+        "js": ["content.js"]
+      }
+    ],
+    "background": {
+      "service_worker": "background.js"
+    }
+  }
+  
