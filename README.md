@@ -1,4 +1,4 @@
-# 🚀 Project Name
+# 🚀 Git-Griffin
 
 **Team Name:** DevBytes  
 **Hackathon:** FantomCode '25  
@@ -134,3 +134,10 @@ The project is impactful as it empowers maintainers to **automatically moderate*
 - Moderation is Autonomous, You can do other works while moderation is in progresss.
 - You can track the Progress in the popup.
 - As Moderation is Multithreaded, You can moderate multiple comments simultenously.
+
+
+
+### Team Members
+- Rahul Samedavar
+- Sambhaji Patil
+- Prathamesh Patil
